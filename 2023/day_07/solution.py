@@ -1,4 +1,5 @@
 import helper as helper
+import functools
 
 
 def rank_hand(hand):
@@ -63,18 +64,83 @@ def solution_p1(data):
     return total_winnings
 
 
-@helper.profile
-def solution_p2(data, debug_mode: bool = False):
-    """
-    Placeholder for the solution to Part 2 of the puzzle.
+def get_hand_type_values():
+    return {
+        "FIVE_OF_A_KIND": 7,
+        "FOUR_OF_A_KIND": 6,
+        "FULL_HOUSE": 5,
+        "THREE_OF_A_KIND": 4,
+        "TWO_PAIR": 3,
+        "ONE_PAIR": 2,
+        "HIGH_CARD": 1,
+    }
 
-    Args:
-    data (list): Input data for the puzzle.
-    debug_mode (bool): Flag to enable debugging mode.
-    """
+
+def get_card_rank(card):
+    values = "23456789TQKA"
+    return values.index(card) if card != "J" else -1
+
+
+def determine_hand_type_with_jokers(hand):
+    hand_types = get_hand_type_values()
+    card_counts = {card: hand.count(card) for card in set(hand)}
+    if "J" in card_counts:
+        joker_count = card_counts.pop("J")
+        max_card = max(card_counts, key=card_counts.get, default="2")
+        card_counts[max_card] = card_counts.get(max_card, 0) + joker_count
+
+    count_freq = sorted(card_counts.values(), reverse=True)
+    if count_freq[0] == 5:
+        return hand_types["FIVE_OF_A_KIND"]
+    if count_freq[0] == 4:
+        return hand_types["FOUR_OF_A_KIND"]
+    if 3 in count_freq and 2 in count_freq:
+        return hand_types["FULL_HOUSE"]
+    if 3 in count_freq:
+        return hand_types["THREE_OF_A_KIND"]
+    if count_freq.count(2) == 2:
+        return hand_types["TWO_PAIR"]
+    if 2 in count_freq:
+        return hand_types["ONE_PAIR"]
+    return hand_types["HIGH_CARD"]
+
+
+def compare_hands_with_jokers(hand1, hand2):
+    hand1_type = determine_hand_type_with_jokers(hand1)
+    hand2_type = determine_hand_type_with_jokers(hand2)
+
+    if hand1_type != hand2_type:
+        return hand1_type - hand2_type
+
+    for card1, card2 in zip(hand1, hand2):
+        rank1 = get_card_rank(card1)
+        rank2 = get_card_rank(card2)
+        if rank1 != rank2:
+            return rank1 - rank2
+    return 0
+
+
+@helper.profile
+def solution_p2(data):
+    hands = [line.split()[0] for line in data]
+    bids = [int(line.split()[1]) for line in data]
+    sorted_hands = sorted(
+        zip(hands, bids),
+        key=functools.cmp_to_key(
+            lambda hand1, hand2: compare_hands_with_jokers(hand1[0], hand2[0])
+        ),
+    )
+
+    total_winnings = sum(bid * (rank + 1) for rank, (_, bid) in enumerate(sorted_hands))
+
     if helper.debug_solution_mode:
-        print(helper.green_text("\nDebugging is enabled in solution_p2"))
-    return None
+        for rank, (hand, bid) in enumerate(sorted_hands):
+            winning_amount = bid * (rank + 1)
+            print(f"Hand: {hand}, Rank: {rank + 1}, Winning: {winning_amount}")
+
+        print(f"Total Winnings: {total_winnings}")
+
+    return total_winnings
 
 
 if __name__ == "__main__":
