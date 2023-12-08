@@ -5,7 +5,6 @@ def parse_input(data):
     time_values, distance_values = [
         list(map(int, line.split(":")[1].strip().split())) for line in data
     ]
-
     return time_values, distance_values
 
 
@@ -19,16 +18,13 @@ def solution_p1(data, debug_mode=False):
         for hold_time in range(race_time):
             if hold_time * (race_time - hold_time) > record_distance:
                 winning_ways += 1
-
         result *= winning_ways
-
     return result
 
 
 def parse_input_part2(data):
     time_value = int("".join(data[0].split(":")[1].split()))
     distance_value = int("".join(data[1].split(":")[1].split()))
-
     return time_value, distance_value
 
 
@@ -40,7 +36,6 @@ def solution_p2(data, debug_mode=False):
     for hold_time in range(race_time):
         if hold_time * (race_time - hold_time) > record_distance:
             winning_ways += 1
-
     return winning_ways
 
 
